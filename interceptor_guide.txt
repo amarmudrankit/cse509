@@ -1,0 +1,73 @@
+Interceptor Guide from CSE 509 website:
+---------------------------------------
+
+How to start:
+-------------
+
+1.  Download the file http://seclab.cs.sunysb.edu/wsze/library_interceptor.tar
+
+2.  The library interceptor works at the binary level. You need to provide the
+    system libraries on your system as input. The library interceptor will
+    then perform instrumentation and add hooks around system call invocations
+    inside the libraries.
+
+    Specifically, you will use the script intercept.sh to do the interception,
+    with first parameter as the location of the input library, second as the
+    output of the instrumented library.
+
+	e.g.,$ ./intercept.sh /lib/libc.so.6 libc.so.6
+
+    This will create the intercepted libc in the current directory.  You will
+    need to do that for both libc and libpthread, as they both will make system
+    calls directly.
+
+3.  The extlib directory contains a sample about how to use the interceptor.
+    The sample will print out the system calls made, and return values of the
+    system calls into a file /tmp/test_library_interceptor. Make the library,
+    and copy the library libextlib.so.1 to the intercepted library directory.
+
+4.  To test the function, you can replace the system libraries with the
+    intercepted libraries + libextlib.so.1. But it can be dangerous if your
+    implementation is buggy. A safer alternative is to set the environment
+    variable LD_LIBRARY_PATH so that an application will use the intercepted
+    library. But you should expect to have the system libraries be replaced,
+    as some programs will ignore environment variables.
+
+    To test it with LD_LIBRARY_PATH, you can use
+
+	e.g.,$ LD_LIBRARY_PATH=$PWD bash.
+
+    This will start bash, and using the intercepted library.
+
+Points to note:
+---------------
+
+1.  If you replace the system libraries with the intercepted libraries, you
+    will not be able to compile programs due to a bug in the interceptor.
+    This means whenever you want to compile a program, you should first restore
+    the libraries, compile your programs, and then replace the intercepted
+    library back. You can write a script to do this.
+
+2.  There is no direct support in denying a system call. To deny a system call,
+    you will need to change the system call number (stored in eax) to e.g.,
+    SYS_getpid. When you deny a system call, you should set the return value in
+    eax to an appropriate value (e.g., -EPERM).
+
+3.  In Linux, kernel uses only register eax to store the system call return
+    value. Typically, a negative eax return value indicates that the system
+    call failed. Remember to cast the eax to integer, instead of using unsigned
+    integer value of eax directly.
+
+4.  When you replace the system libraries, you should find out the locations of
+    libc and libpthread. Some systems may have more than 1 location. You can use
+    cat /proc/###/maps to make sure that your intercepted library is used,
+    instead of the instrumented libraries.
+
+Useful resources:
+-----------------
+
+1.  man 2 xxx: This allows you to look up what parameters are passed in.
+2.  http://lxr.linux.no/ and glibc source code
+    You may need to have a look at them
+3.  Search for syscall.h in the system
+    The list of system calls available on your system
