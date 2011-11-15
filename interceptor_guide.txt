@@ -26,7 +26,14 @@ How to start:
     system calls into a file /tmp/test_library_interceptor. Make the library,
     and copy the library libextlib.so.1 to the intercepted library directory.
 
-4.  To test the function, you can replace the system libraries with the
+4.  Modify /etc/ld.so.conf file to add path to new library destination.
+
+	e.g. /home/amar/syssec/cse509/library_interceptor/lib
+
+    and then run "ldconfig".  Without this next step of LD_LIBRARY_PATH
+    does not take effect.
+
+5.  To test the function, you can replace the system libraries with the
     intercepted libraries + libextlib.so.1. But it can be dangerous if your
     implementation is buggy. A safer alternative is to set the environment
     variable LD_LIBRARY_PATH so that an application will use the intercepted
