@@ -8,17 +8,19 @@ RM	= rm
 ECHO	= echo
 
 SRCS	= main.c syscall_handler.c
-OBJS	= ${SRCS:.c=.o} ${COM_SRCS:.c=.o} ../file_manager/file_manager.o
+OBJS	= ${SRCS:.c=.o} ${COM_SRCS:.c=.o} file_manager.o
 
 .SUFFIXES:
 .SUFFIXES: .o .c
 
 all: $(OBJS) $(HEADERS)
-	g++ -c ../file_manager/file_manager.cpp
 	$(CC) $(CFLAGS) $(LIB_FLAGS) $(OBJS) -o $(LIB)
 
 .c.o :
 	$(OLIB) $(CC) $(CFLAGS) -c $<
+
+file_manager.o:
+	g++ -c ../file_manager/file_manager.cpp -o file_manager.o 
 
 clean :
 	-$(RM) -f $(OBJS)
