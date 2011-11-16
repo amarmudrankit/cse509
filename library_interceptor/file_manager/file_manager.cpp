@@ -1,3 +1,6 @@
+#include <sys/syscalls.h>
+#include <unistd.h>
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -55,6 +58,9 @@ const char* FileManager::GetTmpFile(const std::string &filename) {
 
   // Check if the filename exists and if it exists, copy the file to the
   // tmp file.
+	if(!syscall(SYS_access, filename.c_str(), F_OK)) {
+
+	}
 
   // TODO:rohith
 
