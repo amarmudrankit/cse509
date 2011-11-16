@@ -17,6 +17,7 @@ struct FileManager {
     // Delete all tmp file that we have in the map which no longer exists.
     void DeleteTmpFiles();
   private:
+    void FileCopy(const char *src, const char *dest);
     std::map<std::string, std::string> tmp_file_map_;
 };
 
@@ -37,6 +38,26 @@ const char* fm_get_alt_file(const char *filename) {
     return filename;
   }
   return static_cast<FileManager*>(file_mgr)->GetTmpFile(filename);
+}
+
+void FileManager::FileCopy(const char *src, const char *dest) {
+  char buf;
+  int src_file, dest_file, n;
+  src_file = syscall(SYS_open, src, O_RDONLY);
+  if(src_file == -1) {
+    perror("Unable to read source file");
+    exit(-1);
+  }
+  dest_file = syscall(SYS_open, dest, O_WRONLY|O_CREAT , 0641);
+  if (dest_file == -1) {
+    perror("Unable to open destination file");
+    exit(-1);
+  }
+  while ((n = syscall(SYS_read, src_file, &buf, 1)) != -1) {
+    syscall(SYS_write, dest_file, &buf, 1);
+  }
+  syscall(SYS_close, src_file);
+  syscall(SYS_close, dest_file);
 }
 
 const char* FileManager::GetTmpFile(const std::string &filename) {
