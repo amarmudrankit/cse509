@@ -79,11 +79,9 @@ const char* FileManager::GetTmpFile(const std::string &filename) {
 
   // Check if the filename exists and if it exists, copy the file to the
   // tmp file.
-	if(!syscall(SYS_access, filename.c_str(), F_OK)) {
-
+	if (syscall(SYS_access, filename.c_str(), F_OK)) {
+    FileCopy(filename.c_str(), tmp_file.c_str());
 	}
-
-  // TODO:rohith
 
   return tmp_file_map_[filename].c_str();
 }
@@ -94,6 +92,9 @@ void FileManager::DeleteTmpFiles() {
   for (; file_iter != tmp_file_map_.end(); ++file_iter) {
     // Check if the file exists, if it does, then delete.
     const std::string& tmp_filename = file_iter->second;
-    std::cout << "Deleting " + tmp_filename << std::endl;
+    if (syscall(SYS_access, tmp_filename.c_str(), F_OK)) {
+      std::cout << "Deleting " + tmp_filename << std::endl;
+      syscall(SYS_unlink, tmp_filename.c_str());
+    }
   }
 }
