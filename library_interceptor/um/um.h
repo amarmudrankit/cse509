@@ -102,7 +102,7 @@ int um_log_syscall(int syscall_no, const char * process) {
 	int result;
 	do {
 		result = sqlite3_step(stmt);
-	} while (result & SQLITE_DONE != SQLITE_DONE && (result & SQLITE_BUSY != 0 || result & SQLITE_LOCKED != 0));
+	} while ((result & SQLITE_DONE) != SQLITE_DONE && ((result & SQLITE_BUSY) != 0 || (result & SQLITE_LOCKED) != 0));
 
 	SQLITE_ASSERT(result, SQLITE_DONE);
 
