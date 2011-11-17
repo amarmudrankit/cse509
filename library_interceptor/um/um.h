@@ -1,3 +1,6 @@
+#ifndef __INTERCEPTOR_UM_H__
+#define __INTERCEPTOR_UM_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -112,8 +115,4 @@ void shutdown_um(void) {
 	if(um_db_) sqlite3_close(um_db_);
 }
 
-int main(int argc, char *argv[]) {
-	um_log_syscall(0, "/dev/null");
-
-	return 0;
-}
+#endif // __INTERCEPTOR_UM_H__
