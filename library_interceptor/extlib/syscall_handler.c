@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include "../file_manager/file_manager.h"
+#include "../um/um.h"
 
 
 #include "syscall_handler.h"
@@ -19,6 +20,9 @@ __thread char debug_msg_buf[MAX_LOG_MSG_LEN];
 void syscall_handler_pre(unsigned int *eax_ptr, unsigned int *ebx_ptr, unsigned int *ecx_ptr, 
 		unsigned int *edx_ptr, unsigned int *esi_ptr, unsigned int *edi_ptr) {
 	unsigned int syscall_no = *eax_ptr;
+
+	// TODO: figure out real process path
+	um_log_syscall(syscall_no, "/dummy/process");
 
 #ifdef LOG
 	int pFile = syscall(SYS_open, "/tmp/test_library_interceptor", O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR);

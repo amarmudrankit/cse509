@@ -1,8 +1,8 @@
 CC	= gcc
-CFLAGS	= -ggdb -Wall -D_GNU_SOURCE
+CFLAGS	= -ggdb -Wall -D_GNU_SOURCE -std=c99
 
 LIB	= libextlib.so.1
-LIB_FLAGS = -fPIC -shared -lstdc++
+LIB_FLAGS = -fPIC -shared -lstdc++ -lsqlite3
 
 RM	= rm
 ECHO	= echo
