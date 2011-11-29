@@ -12,6 +12,9 @@
 
 #include <sqlite3.h>
 
+/* bails out if the result from an sqlite function is not what we want it to
+ * be.
+ */
 #define SQLITE_ASSERT(stmt, expected_code) { \
 	int sqlite__result__ = (stmt); \
 	if(sqlite__result__ != expected_code) {\
@@ -23,21 +26,20 @@
 #define SQLITE_ASSERT_OK(stmt) { SQLITE_ASSERT(stmt, SQLITE_OK); }
 
 static const char * const INIT_QUERIES[] = {
+	// specifies what type of interception a user wants for a process. perhaps
+	// they just want to log, perhaps they want "private browsing" ...
 	"CREATE TABLE IF NOT EXISTS user_process(user VARCHAR, process VARCHAR, process_intercept_mode INT)",
+
+	// specifies individual filepath interceptions
 	"CREATE TABLE IF NOT EXISTS file_interceptions(filepath VARCHAR, file_intercept_mode INT)",
+
 	"CREATE TABLE IF NOT EXISTS process_mapped_files(original_filepath VARChAR, mapped_filepath VARCHAR)",
+
+	// logging table for all syscalls ever made
 	"CREATE TABLE IF NOT EXISTS syscall_log(user INT, syscall_no INT, process VARCHAR, timestamp INT DEFAULT CURRENT_TIMESTAMP)"
 };
 
 static const int NUM_INIT_QUERIES = 4;
-
-static int callback(void *not_used, int argc, char *argv[], char *col_name[]) {
-	for(int i = 0; i < argc; ++i) {
-		printf("%s = %s\n", col_name[i], argv[i] ? argv[i] : "NULL");
-	}
-	printf("\n");
-	return 0;
-}
 
 void shutdown_um(void);
 
@@ -45,6 +47,15 @@ static sqlite3* um_db_;
 
 int UM_ERR_INIT = 1;
 
+/* initializes the user manager
+ *
+ * this should be called exactly once during the lifetime of the program.
+ * perhaps a check should be added for that.
+ *
+ * it creates a sqlite db in the home directory of the user, and creates the
+ * tables. of course, things are done only if required (due to the CREATE
+ * TABLE IF NOT EXIST queries).
+ */
 int initialize_um(void) {
 	struct passwd *pw = getpwuid(getuid());
 	assert(pw);
@@ -84,6 +95,8 @@ int initialize_um(void) {
 
 static const char * const LOG_SYSCALL_QUERY = "INSERT INTO syscall_log(user, syscall_no, process) VALUES (@user, @syscall_no, @process)";
 
+/* logs a syscall in the database.
+ */
 int um_log_syscall(int syscall_no, const char * process) {
 	assert(!initialize_um());
 
@@ -111,6 +124,8 @@ int um_log_syscall(int syscall_no, const char * process) {
 	return 0;
 }
 
+/* clean up for the user manager 
+ */
 void shutdown_um(void) {
 	if(um_db_) sqlite3_close(um_db_);
 }
