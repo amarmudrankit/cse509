@@ -57,6 +57,8 @@ int UM_ERR_INIT = 1;
  * TABLE IF NOT EXIST queries).
  */
 int initialize_um(void) {
+	if(um_db_) return 0;
+
 	struct passwd *pw = getpwuid(getuid());
 	assert(pw);
 	assert(pw->pw_dir);
@@ -64,12 +66,12 @@ int initialize_um(void) {
 	const char *home_dir = pw->pw_dir;
 	const char *um_db_filename = ".interceptor.db";
 
-	char *um_db_filepath = (char *) malloc(strlen(home_dir) + strlen(um_db_filename) + 2);
+	int path_len = strlen(home_dir) + strlen(um_db_filename) + 2;
+	char *um_db_filepath = (char *) malloc(path_len);
+	memset(um_db_filepath, 0, path_len);
 	strcat(um_db_filepath, home_dir);
 	strcat(um_db_filepath, "/");
 	strcat(um_db_filepath, um_db_filename);
-
-	if(um_db_) return 0;
 
 	if(sqlite3_open(um_db_filepath, &um_db_)) {
 		printf("Could not open database %s.\n", um_db_filepath);
