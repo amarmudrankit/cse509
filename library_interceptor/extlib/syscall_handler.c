@@ -20,9 +20,11 @@ __thread char debug_msg_buf[MAX_LOG_MSG_LEN];
 void syscall_handler_pre(unsigned int *eax_ptr, unsigned int *ebx_ptr, unsigned int *ecx_ptr, 
 		unsigned int *edx_ptr, unsigned int *esi_ptr, unsigned int *edi_ptr) {
 	unsigned int syscall_no = *eax_ptr;
+	char *old_ptr = (char*)(*ebx_ptr);
+	unsigned int flags = *ecx_ptr;
 
 	// TODO: figure out real process path
-	um_log_syscall(syscall_no, "/dummy/process");
+	// um_log_syscall(syscall_no, "/dummy/process");
 
 #ifdef LOG
 	int pFile = syscall(SYS_open, "/tmp/test_library_interceptor", O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR);
@@ -32,14 +34,24 @@ void syscall_handler_pre(unsigned int *eax_ptr, unsigned int *ebx_ptr, unsigned 
 	} 
 #endif
 
-	if(syscall_no == SYS_open) {
-		char *old_ptr = (char*)(*ebx_ptr);
+	if(syscall_no == SYS_open && !((flags & 0xf) == O_RDONLY)) {
+		fflush(stdout);
+		int byteCount = snprintf(debug_msg_buf, MAX_LOG_MSG_LEN, "file open flags for %s: %u (O_RDONLY: %d, O_WRONLY: %d)\n", old_ptr, flags, O_RDONLY, O_WRONLY);
+		syscall(SYS_write, pFile, debug_msg_buf, byteCount);
+		fflush(stdout);
 		const char *alt_ptr = fm_get_alt_file(old_ptr);
 		*ebx_ptr = (unsigned int) alt_ptr;
 
 #ifdef LOG
 		if(pFile > 0) {
 			int byteCount = snprintf(debug_msg_buf, MAX_LOG_MSG_LEN, "File name: %s swapped %s\n", old_ptr, alt_ptr);
+			syscall(SYS_write, pFile, debug_msg_buf, byteCount);
+		}
+#endif
+	} else if(syscall_no == SYS_open) {
+#ifdef LOG
+		if(pFile > 0) {
+			int byteCount = snprintf(debug_msg_buf, MAX_LOG_MSG_LEN, "File name: %s opened with permissions: %o\n", old_ptr, (flags & 0xf));
 			syscall(SYS_write, pFile, debug_msg_buf, byteCount);
 		}
 #endif

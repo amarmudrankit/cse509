@@ -1,3 +1,4 @@
+/* vim: set ts=2 sw=2 tw=78 et: */
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -56,7 +57,17 @@ void FileManager::FileCopy(const char *src, const char *dest) {
     perror("Unable to read source file");
     exit(-1);
   }
-  dest_file = syscall(SYS_open, dest, O_WRONLY|O_CREAT , 0641);
+
+  struct stat o_stat;
+
+  // TODO: syscall(SYS_stat ... won't work
+  int r = stat(src, &o_stat);
+  if(r) { 
+    perror("Unable to stat destination file.");
+    exit(-1);
+  }
+
+  dest_file = syscall(SYS_open, dest, O_WRONLY|O_CREAT, (o_stat.st_mode & 0777));
   if (dest_file == -1) {
     perror("Unable to open destination file");
     exit(-1);
@@ -78,9 +89,15 @@ const char* FileManager::GetTmpFile(const std::string &filename) {
   }
 
   // Add the tmp file to the map and return the reference to the same.
-  std::string tmp_file = filename + ".tmp";
+  std::string tmp_file = filename;
+  for(int l = 0; l < tmp_file.length(); ++l) {
+    if(tmp_file[l] == '/') tmp_file[l] = '_';
+  }
+  
+  tmp_file = "/tmp/" + tmp_file + ".tmp";
+
   tmp_file_map_[filename] = tmp_file;
-  std::cout << "Inserting: " << filename << std::endl;
+  std::cerr << "Inserting: " << filename << " into " << tmp_file << std::endl;
 
   // Check if the filename exists and if it exists, copy the file to the
   // tmp file.
@@ -88,7 +105,9 @@ const char* FileManager::GetTmpFile(const std::string &filename) {
     FileCopy(filename.c_str(), tmp_file.c_str());
 	}
 
-  return tmp_file_map_[filename].c_str();
+  const char *ret = tmp_file_map_[filename].c_str();
+
+  return ret;
 }
 
 // Delete all tmp file that we have in the map which no longer exists.
